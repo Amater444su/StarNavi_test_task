@@ -7,4 +7,5 @@ class CheckLastActivityMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         if request.user.is_authenticated:
-            User.objects.filter(id=request.user.id).update(last_activity=timezone.now())
+            user = User.objects.filter(id=request.user.id)
+            user.update(last_activity=timezone.now())

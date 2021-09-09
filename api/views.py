@@ -44,14 +44,14 @@ class PutLike(APIView):
         user = self.request.user
         post = Post.objects.filter(id=post_id).first()
         if user in post.likes.all():
-            return Response()
+            return Response(f"This post is already like by the User {user.username}")
         elif user in post.dislikes.all():
             post.dislikes.remove(user)
             DisLike.objects.filter(id=post_id).first().delete()
 
         post.likes.add(user)
         Like.objects.create(post_id=post_id, user=user)
-        return Response()
+        return Response(f"Like was added to the post {post.title}")
 
 
 class PutDislike(APIView):
@@ -60,30 +60,37 @@ class PutDislike(APIView):
         user = self.request.user
         post = Post.objects.filter(id=post_id).first()
         if user in post.dislikes.all():
-            return Response()
+            return Response(f"This post is already dislike by the User {user.username}")
         elif user in post.likes.all():
             post.likes.remove(user)
             Like.objects.filter(id=post_id).first().delete()
 
         post.dislikes.add(user)
         DisLike.objects.create(post_id=post_id, user=user)
-        return Response()
+        return Response(f"Dislike was added to the post {post.title}")
 
 
 class VotesAnalytic(APIView):
-    """Displays all likes and dislikes statistic
-        for the particular date"""
+    """
+    Displays all likes and dislikes statistic
+    for the particular date
+    """
     def get(self, request):
-        date_from = self.request.query_params['date_from']
-        date_to = self.request.query_params['date_to']
-        date_from = datetime.strptime(date_from, '%Y-%m-%d')
-        date_to = datetime.strptime(date_to, '%Y-%m-%d')
-        total_likes = Like.objects.filter(Q(like_date__gte=date_from) & Q(like_date__lte=date_to)) \
-            .values(date=TruncDate('like_date')).annotate(likes=Count('id'))
-        total_dislikes = DisLike.objects.filter(Q(dislike_date__gte=date_from) & Q(dislike_date__lte=date_to)) \
-            .values(date=TruncDate('dislike_date')).annotate(dislikes=Count('id'))
+        DATETIME_FORMAT = '%Y-%m-%d'
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        date_from = datetime.strptime(date_from, DATETIME_FORMAT)
+        date_to = datetime.strptime(date_to, DATETIME_FORMAT)
+        total_likes = Like.objects.filter(Q(like_date__gte=date_from) & Q(like_date__lte=date_to))
+        total_likes = total_likes.values(date=TruncDate('like_date')).annotate(likes=Count('id'))
+        total_dislikes = DisLike.objects.filter(Q(dislike_date__gte=date_from) & Q(dislike_date__lte=date_to))
+        total_dislikes = total_dislikes.values(date=TruncDate('dislike_date')).annotate(dislikes=Count('id'))
+        response_data = {
+            "total_likes": total_likes,
+            "total_dislikes": total_dislikes
+        }
 
-        return Response(f'total likes {total_likes}, total dislikes {total_dislikes}')
+        return Response(response_data)
 
 
 class UserActivity(generics.ListAPIView):
@@ -91,5 +98,6 @@ class UserActivity(generics.ListAPIView):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        queryset = User.objects.filter(id=self.request.user.id)
+        user = self.request.user
+        queryset = User.objects.filter(id=user.id)
         return queryset

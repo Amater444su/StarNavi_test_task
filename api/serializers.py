@@ -1,10 +1,12 @@
 from rest_framework import serializers
-from .models import Post, User
+from api.models import Post, User
+
+DATETIME_FORMAT = "%Y %B %d %H:%M:%S"
 
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    created_date = serializers.DateTimeField(format="%Y %B %d")
+    created_date = serializers.DateTimeField(format=DATETIME_FORMAT)
 
     class Meta:
         model = Post
@@ -13,8 +15,8 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    last_activity = serializers.DateTimeField(format="%Y %B %d %H:%M:%S")
-    last_login = serializers.DateTimeField(format="%Y %B %d %H:%M:%S")
+    last_activity = serializers.DateTimeField(format=DATETIME_FORMAT)
+    last_login = serializers.DateTimeField(format=DATETIME_FORMAT)
 
     class Meta:
         model = User
