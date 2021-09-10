@@ -3,6 +3,7 @@ import ipdb
 from django.utils import timezone
 from django.urls import reverse
 from api.models import Post, Like, DisLike
+from datetime import datetime
 
 
 @pytest.mark.django_db
@@ -24,8 +25,15 @@ class TestPostViews:
     def test_post_detail(self, api_client_authenticated, post):
         path = reverse('post_detail', kwargs={'pk': post.id})
         response = api_client_authenticated.get(path)
+        post_date = datetime.strftime(post.created_date, "%Y %B %d %H:%M:%S")
 
         assert response.status_code == 200
+        assert response.json() == {
+            'author': post.author.username,
+            'title': post.title,
+            'text': post.text,
+            'created_date': post_date
+        }
 
     def test_list_post(self, api_client_authenticated, post):
         path = reverse('posts')

@@ -81,8 +81,10 @@ class VotesAnalytic(APIView):
         date_to = self.request.query_params.get('date_to')
         date_from = datetime.strptime(date_from, DATETIME_FORMAT)
         date_to = datetime.strptime(date_to, DATETIME_FORMAT)
+
         total_likes = Like.objects.filter(Q(like_date__gte=date_from) & Q(like_date__lte=date_to))
         total_likes = total_likes.values(date=TruncDate('like_date')).annotate(likes=Count('id'))
+
         total_dislikes = DisLike.objects.filter(Q(dislike_date__gte=date_from) & Q(dislike_date__lte=date_to))
         total_dislikes = total_dislikes.values(date=TruncDate('dislike_date')).annotate(dislikes=Count('id'))
         response_data = {
